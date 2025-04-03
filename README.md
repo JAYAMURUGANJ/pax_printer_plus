@@ -27,5 +27,6 @@ Add the following to your `pubspec.yaml` file:
 ```yaml
 dependencies:
   pax_printer_plus:
-    path: ../
+    git: https://github.com/JAYAMURUGANJ/pax_printer_plus.git
+    ref: main
 
