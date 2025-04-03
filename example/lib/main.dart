@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pax_printer_plus/utils/printer_status.dart';
 
-import 'pax_printer_plus_handler.dart';
+import 'utils/pax_printer_plus_handler.dart';
 
 void main() {
   runApp(const MyApp());
@@ -36,45 +36,57 @@ class PrinterPage extends StatefulWidget {
 
 class _PrinterPageState extends State<PrinterPage> {
   String _printerStatus = 'Unknown';
-
-  // Use the handler instead of the plugin directly
+  bool _isPrinterInitialized = false; // Track printer initialization status
   final _printerHandler = PaxPrinterPlusHandler();
 
   @override
   void initState() {
     super.initState();
     initPrinterState();
+    getPrinterStatus();
   }
 
   // Initialize printer and get platform info
   Future<void> initPrinterState() async {
-    String platformVersion;
-    String printerStatus;
-
-    // Platform messages may fail, so we use a try/catch PlatformException.
     try {
       // Initialize the printer
       await _printerHandler.initialize();
-      // Get printer status
-      PrinterStatus status = await _printerHandler.printerStatus();
-      printerStatus = status.toString().split('.').last;
+      setState(() {
+        _isPrinterInitialized = true; // Mark as initialized
+      });
+      // Get initial printer status
+      await getPrinterStatus();
     } on PlatformException {
-      platformVersion = 'Failed to get platform version.';
-      printerStatus = 'Failed to get printer status.';
+      setState(() {
+        _printerStatus = 'Initialization Failed!';
+        _isPrinterInitialized = false;
+      });
     }
+  }
 
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
-    if (!mounted) return;
+  // Get printer status only if initialized
+  Future<void> getPrinterStatus() async {
+    if (!_isPrinterInitialized) return;
 
-    setState(() {
-      _printerStatus = printerStatus;
-    });
+    try {
+      PrinterStatus status = await _printerHandler.printerStatus();
+      setState(() {
+        _printerStatus = status.toString().split('.').last;
+      });
+    } on PlatformException {
+      setState(() {
+        _printerStatus = 'Failed to get printer status.';
+      });
+    }
   }
 
   // Print a sample receipt
   Future<void> printSampleReceipt() async {
+    if (!_isPrinterInitialized) {
+      showSnackBar('Printer not initialized!');
+      return;
+    }
+
     try {
       final result = await _printerHandler.printSimpleReceipt(
         "Sample Receipt\n\n"
@@ -84,30 +96,41 @@ class _PrinterPageState extends State<PrinterPage> {
         "Total: \$25.50\n\n"
         "Thank you for your purchase!",
       );
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Print result: $result')));
-      }
+
+      showSnackBar('Print result: $result');
 
       // Update printer status after printing
-      final status = await _printerHandler.printerStatus();
-      setState(() {
-        _printerStatus = status.toString().split('.').last;
-      });
+      await getPrinterStatus();
     } on PlatformException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: ${e.message}')));
-      }
+      showSnackBar('Error: ${e.message}');
+    }
+  }
+
+  // Show message using SnackBar
+  void showSnackBar(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('PAX Printer Example')),
+      appBar: AppBar(
+        leading: Icon(Icons.print_rounded),
+        title: const Text('PAX Printer Plus'),
+        actions: [
+          Visibility(
+            visible: _isPrinterInitialized,
+            child: IconButton(
+              icon: Icon(Icons.refresh),
+              onPressed: () => getPrinterStatus(),
+            ),
+          ),
+        ],
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -115,17 +138,12 @@ class _PrinterPageState extends State<PrinterPage> {
             Text('Printer status: $_printerStatus'),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: printSampleReceipt,
+              onPressed: _isPrinterInitialized ? printSampleReceipt : null,
               child: const Text('Print Sample Receipt'),
             ),
             const SizedBox(height: 10),
             ElevatedButton(
-              onPressed: () async {
-                final status = await _printerHandler.printerStatus();
-                setState(() {
-                  _printerStatus = status.toString().split('.').last;
-                });
-              },
+              onPressed: _isPrinterInitialized ? getPrinterStatus : null,
               child: const Text('Check Printer Status'),
             ),
           ],
