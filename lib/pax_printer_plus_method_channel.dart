@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-import 'utils/font_types.dart';
 import 'pax_printer_plus_platform_interface.dart';
+import 'utils/font_types.dart';
 import 'utils/printer_status.dart';
 
 /// An implementation of [PaxPrinterPlusPlatform] that uses method channels.

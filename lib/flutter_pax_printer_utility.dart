@@ -22,8 +22,8 @@ class FlutterPaxPrinterUtility {
   static Future<PrinterStatus> get getStatus async {
     final String? status = await _channel.invokeMethod('getStatus');
     switch (status) {
-      case "Printer is ready":
-        return PrinterStatus.PRINTER_IS_READY;
+      case "Success":
+        return PrinterStatus.SUCCESS;
       case "Printer is busy":
         return PrinterStatus.PRINTER_IS_BUSY;
       case "Out of paper":
@@ -350,7 +350,7 @@ class FlutterPaxPrinterUtility {
 
 enum PrinterStatus {
   UNKNOWN,
-  PRINTER_IS_READY,
+  SUCCESS,
   PRINTER_IS_BUSY,
   OUT_OF_PAPER,
   FORMAT_PRINT_PACKET_ERROR,

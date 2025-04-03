@@ -249,7 +249,7 @@ public class PrinterUtility {
         String res = "";
         switch (status) {
             case 0:
-                res = "Printer is ready";
+                res = "Success";
                 break;
             case 1:
                 res = "Printer is busy";
