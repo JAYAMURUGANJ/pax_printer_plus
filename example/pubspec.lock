@@ -165,11 +165,9 @@ packages:
   pax_printer_plus:
     dependency: "direct main"
     description:
-      path: "."
-      ref: main
-      resolved-ref: "73c617fb49d09bc4296b3897b4ef33d19605fb57"
-      url: "https://github.com/JAYAMURUGANJ/pax_printer_plus.git"
-    source: git
+      path: ".."
+      relative: true
+    source: path
     version: "0.0.1"
   platform:
     dependency: transitive
